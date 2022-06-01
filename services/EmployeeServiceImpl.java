@@ -1,8 +1,11 @@
 package pro.sky.java.course2.hw211.services;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import pro.sky.java.course2.hw211.data.Employee;
+import pro.sky.java.course2.hw211.exeptions.EmployeeAlreadyAddedException;
 import pro.sky.java.course2.hw211.exeptions.EmployeeNotFoundException;
+import pro.sky.java.course2.hw211.exeptions.EmployeeWrongData;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,9 +19,18 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void addEmployee(String lastName, String firstName, int salary, int department) {
+    public void addEmployee(String lastNameDraft, String firstNameDraft, int salary, int department) {
+        if (StringUtils.isNotBlank(lastNameDraft) && StringUtils.isNotBlank(firstNameDraft)) {
+            String lastName = makeFirstLetterBig(deleteTrash(lastNameDraft));
+            String firstName = makeFirstLetterBig(deleteTrash(firstNameDraft));
             Employee employee = new Employee(lastName, firstName, salary, department);
+            if (employees.containsKey(createKey(lastName, firstName))) {
+                throw new EmployeeAlreadyAddedException();
+            }
             employees.put(createKey(lastName, firstName), employee);
+        } else {
+            throw new EmployeeWrongData();
+        }
     }
 
     @Override
@@ -75,6 +87,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private String createKey(String lastName, String firstName) {
         return lastName + " " + firstName;
+    }
+
+    private String makeFirstLetterBig(String s) {
+        return StringUtils.capitalize(s);
+    }
+
+    private String deleteTrash(String s) {
+        return StringUtils.removeAll(StringUtils.deleteWhitespace(StringUtils.removeAll(s, "\\pP")), "\\d");
     }
 
 }
